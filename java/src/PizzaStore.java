@@ -606,18 +606,29 @@
                   
                case 2: // Filter by item type
                   System.out.println("Available item types:");
+                  // Get all distinct item types - show them exactly as stored
                   String typesQuery = "SELECT DISTINCT typeOfItem FROM Items ORDER BY typeOfItem";
                   esql.executeQueryAndPrintResult(typesQuery);
                   
                   System.out.print("Enter type to filter by: ");
                   String type = in.readLine();
                   
-                  String filteredQuery = String.format("SELECT itemName, typeOfItem, price, description FROM Items WHERE LOWER(typeOfItem) = LOWER('%s') ORDER BY itemName", type);
+                  // More flexible filtering with TRIM and pattern matching
+                  String filteredQuery = String.format(
+                     "SELECT itemName, typeOfItem, price, description FROM Items " +
+                     "WHERE TRIM(LOWER(typeOfItem)) LIKE LOWER('%%%s%%') " +
+                     "ORDER BY itemName", 
+                     type);
+                     
                   System.out.println("\n===== FILTERED MENU BY TYPE =====");
                   int count = esql.executeQueryAndPrintResult(filteredQuery);
                   
                   if (count == 0) {
                      System.out.println("No items found with the specified type.");
+                     
+                     // Additional debugging to show what types exist
+                     System.out.println("\nDebug - All existing types:");
+                     esql.executeQueryAndPrintResult("SELECT DISTINCT typeOfItem FROM Items");
                   }
                   break;
                   
@@ -708,7 +719,7 @@
             }
             
             // Generate order ID
-            int orderID = 1; // Default if no orders exist
+            int orderID = 0; // Default if no orders exist
             String orderIDQuery = "SELECT MAX(orderID) FROM FoodOrder";
             List<List<String>> result = esql.executeQueryAndReturnResult(orderIDQuery);
             
@@ -853,7 +864,7 @@
        }
 
        public static void viewRecentOrders(PizzaStore esql) {
-
+         
        }
 
        public static void viewOrderInfo(PizzaStore esql) {
