@@ -288,12 +288,14 @@
                  System.out.println("8. View Stores"); 
  
                  //**the following functionalities should only be able to be used by drivers & managers**
-                 System.out.println("9. Update Order Status");
- 
-                 //**the following functionalities should ony be able to be used by managers**
-                 System.out.println("10. Update Menu");
-                 System.out.println("11. Update User");
- 
+                 if (currentRole.equalsIgnoreCase("driver") || currentRole.equalsIgnoreCase("manager")) {
+                    System.out.println("9. Update Order Status");
+                 }
+                 //**the following functionalities should only be able to be used by managers**
+                 if (currentRole.equalsIgnoreCase("manager")) {
+                    System.out.println("10. Update Menu");
+                    System.out.println("11. Update User");
+                 }
                  System.out.println(".........................");
                  System.out.println("20. Log out");
                  switch (readChoice()){
@@ -876,15 +878,37 @@
        }
 
        public static void updateOrderStatus(PizzaStore esql) {
+         if (currentUser == null) {
+            System.out.println("Error: You must be logged in to update the order status.");
+            return;
+         }
+         if (!currentRole.equalsIgnoreCase("manager") && !currentRole.equalsIgnoreCase("driver")) {
+            System.out.println("Error: You do not have permission to update order status.");
+            return;
+         }
 
        }
 
        public static void updateMenu(PizzaStore esql) {
-
+         if (currentUser == null) {
+            System.out.println("Error: You must be logged in to update the menu.");
+            return;
+         }
+         if (!currentRole.equalsIgnoreCase("manager")) {
+            System.out.println("Error: You do not have permission to update the menu.");
+            return;
+         }
        }
 
        public static void updateUser(PizzaStore esql) {
-
+         if (currentUser == null) {
+            System.out.println("Error: You must be logged in to update user information.");
+            return;
+         }
+         if (!currentRole.equalsIgnoreCase("manager")) {
+            System.out.println("Error: You do not have permission to update user information.");
+            return;
+         }
        }
 
     }//end PizzaStore
