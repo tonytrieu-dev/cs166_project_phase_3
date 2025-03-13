@@ -374,10 +374,10 @@
          String password = in.readLine().trim();
          
          System.out.print("Enter your phone number: ");
-         String phoneNumber = in.readLine().trim();
+         String phoneNum = in.readLine().trim();
          
          // Validate that all required fields are provided
-         if (login.isEmpty() || password.isEmpty() || phoneNumber.isEmpty()) {
+         if (login.isEmpty() || password.isEmpty() || phoneNum.isEmpty()) {
             System.out.println("Error: All fields must be filled out.");
             return;
          }
@@ -394,17 +394,17 @@
          // Sanitize inputs to prevent SQL injection attacks
          login = login.replace("'", "''");
          password = password.replace("'", "''");
-         phoneNumber = phoneNumber.replace("'", "''");
+         phoneNum = phoneNum.replace("'", "''");
          
          // Set default role for new users
          String role = "customer";
          
          // Construct and execute the SQL query to add the user to the database
-         String query = "INSERT INTO Users (login, password, role, favoriteItems, phoneNumber) VALUES ('" 
+         String query = "INSERT INTO Users (login, password, role, favoriteItems, phoneNum) VALUES ('" 
                      + login + "', '" 
                      + password + "', '" 
                      + role + "', NULL, '" 
-                     + phoneNumber + "')";
+                     + phoneNum + "')";
          
          esql.executeUpdate(query);
          
@@ -476,7 +476,7 @@
             return;
          }
          
-         String query = String.format("SELECT login, role, favoriteItems, phoneNumber FROM Users WHERE login = '%s'", currentUser);
+         String query = String.format("SELECT login, role, favoriteItems, phoneNum FROM Users WHERE login = '%s'", currentUser);
          List<List<String>> result = esql.executeQueryAndReturnResult(query);
          
          if (result.size() > 0) {
@@ -558,16 +558,16 @@
                      
                   case 3: // Phone number
                      System.out.print("New phone number: ");
-                     String phoneNumber = in.readLine();
+                     String phoneNum = in.readLine();
                      
-                     if (phoneNumber.length() < 10) {
+                     if (phoneNum.length() < 10) {
                         System.out.println("Error: Enter a valid phone number (10+ digits).");
                         return;
                      }
                      
                      // Update phone number
-                     updateQuery = String.format("UPDATE Users SET phoneNumber = '%s' WHERE login = '%s'", 
-                        phoneNumber, currentUser);
+                     updateQuery = String.format("UPDATE Users SET phoneNum = '%s' WHERE login = '%s'", 
+                        phoneNum, currentUser);
                      esql.executeUpdate(updateQuery);
                      System.out.println("Phone number updated successfully.");
                      break;
