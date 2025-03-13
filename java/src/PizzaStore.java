@@ -817,7 +817,6 @@
          try {
                System.out.println("Order History");
                System.out.println("------------");
-               
                String query;
                
                // Check user role for permissions
