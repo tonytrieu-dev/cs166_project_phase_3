@@ -288,14 +288,10 @@
                  System.out.println("8. View Stores"); 
  
                  //**the following functionalities should only be able to be used by drivers & managers**
-                 if (currentRole.equalsIgnoreCase("driver") || currentRole.equalsIgnoreCase("manager")) {
-                 System.out.println("9. Update Order Status");
-                 }
+                  System.out.println("9. Update Order Status");
                  //**the following functionalities should only be able to be used by managers**
-                 if (currentRole.equalsIgnoreCase("manager")) {
-                 System.out.println("10. Update Menu");
-                 System.out.println("11. Update User");
-                 }
+                  System.out.println("10. Update Menu");
+                  System.out.println("11. Update User");
                  System.out.println(".........................");
                  System.out.println("20. Log out");
                  switch (readChoice()){
@@ -816,7 +812,8 @@
                } else {
                   System.out.println("\nTotal orders: " + result);
                }
-            } catch (Exception e) {
+            } 
+            catch (Exception e) {
                System.err.println(e.getMessage());
             }
        }
@@ -846,103 +843,253 @@
             }
        }
 
-       public static void viewOrderInfo(PizzaStore esql) {
-         try {
-            if (currentUser == null) {
-               System.out.println("Error: You must be logged in to view order information.");
-               return;
+public static void viewOrderInfo(PizzaStore esql) {
+    try {
+        if (currentUser == null) {
+            System.out.println("Error: You must be logged in to view order information.");
+            return;
+        }
+        
+        //System.out.println("Debug - Current user: " + currentUser);
+        //System.out.println("Debug - Current role: '" + currentRole + "'");
+        
+        System.out.print("Enter the Order ID to look up: ");
+        int orderID = Integer.parseInt(in.readLine());
+        
+        // First check if the order exists at all
+        String checkOrderQuery = String.format(
+            "SELECT COUNT(*) FROM FoodOrder WHERE orderID = %d", orderID);
+        int orderCount = Integer.parseInt(esql.executeQueryAndReturnResult(checkOrderQuery).get(0).get(0));
+        
+        if (orderCount == 0) {
+            System.out.println("Error: Order ID " + orderID + " does not exist in the database.");
+            return;
+        }
+        
+        String query;
+        // Trim the role to remove any possible whitespace
+        String role = currentRole.trim();
+        
+        if (role.equalsIgnoreCase("manager") || role.equalsIgnoreCase("driver")) {
+            // Managers & Drivers can see all orders
+            query = String.format(
+                "SELECT orderTimestamp, totalPrice, orderStatus FROM FoodOrder WHERE orderID = %d", 
+                orderID);
+            //System.out.println("Debug - Using manager/driver query");
+        } else {
+            // Customers can only see their own orders
+            query = String.format(
+                "SELECT orderTimestamp, totalPrice, orderStatus FROM FoodOrder WHERE orderID = %d AND login = '%s'", 
+                orderID, currentUser);
+            //System.out.println("Debug - Using customer query");
+        }
+        
+        //System.out.println("Debug - Query: " + query);
+        
+        List<List<String>> orderDetails = esql.executeQueryAndReturnResult(query);
+        
+        if (orderDetails.isEmpty()) {
+            if (role.equalsIgnoreCase("customer")) {
+                System.out.println("Error: You do not have permission to view this order.");
+            } else {
+                System.out.println("Error: Could not retrieve order details. Please contact technical support.");
             }
+            return;
+        }
+        
+        // Display Order Info
+        List<String> order = orderDetails.get(0);
+        System.out.println("\n===== Order Details =====");
+        System.out.println("Timestamp: " + order.get(0));
+        System.out.println("Total Price: $" + order.get(1));
+        System.out.println("Status: " + order.get(2).trim()); // Trim to remove padding on char fields
+        
+        // Retrieve order items
+        String itemsQuery = String.format(
+            "SELECT itemName, quantity FROM ItemsInOrder WHERE orderID = %d", 
+            orderID);
+        
+        System.out.println("\n===== Order Items =====");
+        int itemCount = esql.executeQueryAndPrintResult(itemsQuery);
+        
+        if (itemCount == 0) {
+            System.out.println("No items found for this order.");
+        }
+    } catch (NumberFormatException e) {
+        System.err.println("Error: Invalid order ID format. Please enter a numeric value.");
+    } catch (Exception e) {
+        System.err.println("Error retrieving order information: " + e.getMessage());
+        e.printStackTrace(); // Print full stack trace for debugging
+    }
+}
 
-            System.out.print("Enter the Order ID to look up: ");
-            int orderID = Integer.parseInt(in.readLine());
-
-            String query;
-            if (currentRole.equalsIgnoreCase("manager") || currentRole.equalsIgnoreCase("driver")) {
-               // Managers & Drivers can see all orders
-               query = String.format(
-                  "SELECT orderTimeStamp, totalPrice, orderStatus FROM FoodOrder WHERE orderID = %d",
-                  orderID);
-            }
-            else {
-               // Customer can only see their order
-               query = String.format(
-                  "SELECT orderTimeStamp, totalPrice, orderStatus, FROM FoodOrder WHERE %d AND login = '%s'",
-                  orderID, currentUser);
-            }
-
-            List<List<String>> orderDetails = esql.executeQueryAndReturnResult(query);
-
-            if (orderDetails.isEmpty()) {
-               System.out.println("Error: No order found or you do not have permission to view this order.");
-               return;
-            }
-            // Now display the order info
-            List<String> order = orderDetails.get(0);
-            System.out.println("\n===== Order Details =====");
-            System.out.println("Timestamp: " + order.get(0));
-            System.out.println("Total Price: $" + order.get(1));
-            System.out.println("Status: " + order.get(2));
-
-            // Retrieve order items
-         String itemsQuery = String.format(
-               "SELECT itemName, quantity FROM ItemsInOrder WHERE orderID = %d",
-               orderID);
-         System.out.println("\n===== Order Items =====");
-         int itemCount = esql.executeQueryAndPrintResult(itemsQuery);
-
-         if (itemCount == 0) {
-               System.out.println("No items found for this order.");
-         }
-      } 
-         catch (Exception e) {
-            System.err.println("Error retrieving order information: " + e.getMessage());
-         }
-      }
    
 
-       public static void viewStores(PizzaStore esql) {
+       // Shows all store information
+      public static void viewStores(PizzaStore esql) {
          try {
-            System.out.println("\n===== List of Stores =====");
-            String query = "Select storeID, address, city, state, reviewScore, isOpen FROM Store ORDER BY storeID";
-            esql.executeQueryAndPrintResult(query);
+            System.out.println("\n===== STORES =====");
+            String query = "SELECT * FROM Store ORDER BY storeID";
+            int count = esql.executeQueryAndPrintResult(query);
+            
+            if (count == 0) System.out.println("No stores found.");
+         } catch (Exception e) {
+            System.err.println(e.getMessage());
          }
+      }
+
+      // Updates an order's status (drivers & managers only)
+      public static void updateOrderStatus(PizzaStore esql) {
+    try {
+        if (currentUser == null) {
+            System.out.println("You must be logged in to update order status.");
+            return;
+        }
+
+        // Fixed permission check - only allows managers and drivers
+        if (currentRole.trim().equalsIgnoreCase("customer")) {
+            System.out.println("Permission denied. Only managers and drivers can update order status.");
+            return;
+        }
+
+        System.out.println("\nCurrent orders:");
+        esql.executeQueryAndPrintResult("SELECT orderID, login, orderStatus FROM FoodOrder ORDER BY orderTimestamp DESC LIMIT 10");
+
+        System.out.print("Enter order ID: ");
+        int orderID = Integer.parseInt(in.readLine());
+
+        System.out.println("Status options: 1-Placed, 2-Preparing, 3-Ready, 4-Delivering, 5-Delivered");
+        System.out.print("New status (1-5): ");
+        int choice = Integer.parseInt(in.readLine());
+
+        String[] statuses = {"Placed", "Preparing", "Ready", "Delivering", "Delivered"};
+
+        if (choice < 1 || choice > 5) {
+            System.out.println("Invalid status.");
+            return;
+        }
+
+        String query = String.format("UPDATE FoodOrder SET orderStatus = '%s' WHERE orderID = %d", 
+                                    statuses[choice-1], orderID);
+
+        // Changed this line - don't try to capture a return value
+        esql.executeUpdate(query);
+
+        // Simply report success since we can't check the number of rows affected
+        System.out.println("Status updated successfully.");
+    } catch (Exception e) {
+        System.err.println("Error updating order status: " + e.getMessage());
+    }
+}
+
+      // Updates menu items (managers only)
+      public static void updateMenu(PizzaStore esql) {
+         try {
+            if (currentUser == null || !currentRole.trim().equalsIgnoreCase("manager")) {
+               System.out.println("Permission denied.");
+               return;
+            }
+            
+            System.out.println("1. Add item");
+            System.out.println("2. Update item");
+            System.out.println("3. Delete item");
+            
+            switch(readChoice()) {
+               case 1: // Add
+                  System.out.print("Name: ");
+                  String name = in.readLine();
+                  System.out.print("Type: ");
+                  String type = in.readLine();
+                  System.out.print("Ingredients: ");
+                  String ingredients = in.readLine();
+                  System.out.print("Price: ");
+                  float price = Float.parseFloat(in.readLine());
+                  System.out.print("Description: ");
+                  String desc = in.readLine();
+                  
+                  String query = String.format("INSERT INTO Items VALUES ('%s', '%s', '%s', %f, '%s')", 
+                                          name, ingredients, type, price, desc);
+                  esql.executeUpdate(query);
+                  System.out.println("Item added.");
+                  break;
+                  
+               case 2: // Update
+                  System.out.println("Current menu:");
+                  esql.executeQueryAndPrintResult("SELECT itemName, price FROM Items");
+                  
+                  System.out.print("Item to update: ");
+                  String item = in.readLine();
+                  System.out.print("New price: ");
+                  float newPrice = Float.parseFloat(in.readLine());
+                  
+                  esql.executeUpdate(String.format("UPDATE Items SET price = %f WHERE itemName = '%s'", newPrice, item));
+                  System.out.println("Price updated.");
+                  break;
+                  
+               case 3: // Delete
+                  System.out.println("Current menu:");
+                  esql.executeQueryAndPrintResult("SELECT itemName FROM Items");
+                  
+                  System.out.print("Item to delete: ");
+                  String delItem = in.readLine();
+                  
+                  System.out.print("Confirm delete (y/n): ");
+                  if (in.readLine().equalsIgnoreCase("y")) {
+                     esql.executeUpdate(String.format("DELETE FROM Items WHERE itemName = '%s'", delItem));
+                     System.out.println("Item deleted.");
+                  }
+                  break;
+            }
+         } 
          catch (Exception e) {
-            System.err.println("Error retrieving store information: " + e.getMessage());
+            System.err.println(e.getMessage());
          }
-       }
+      }
 
-       public static void updateOrderStatus(PizzaStore esql) {
-         if (currentUser == null) {
-            System.out.println("Error: You must be logged in to update the order status.");
-            return;
+      // Updates user info (managers only)
+      public static void updateUser(PizzaStore esql) {
+         try {
+            if (currentUser == null || !currentRole.trim().equalsIgnoreCase("manager")) {
+               System.out.println("Permission denied.");
+               return;
+            }
+            
+            System.out.println("Users:");
+            esql.executeQueryAndPrintResult("SELECT login, role FROM Users");
+            
+            System.out.print("Username to modify: ");
+            String user = in.readLine();
+            
+            System.out.println("1. Change role");
+            System.out.println("2. Reset password");
+            
+            switch(readChoice()) {
+               case 1:
+                  System.out.print("New role (customer/driver/manager): ");
+                  String role = in.readLine();
+                  
+                  if (role.equalsIgnoreCase("customer") || 
+                     role.equalsIgnoreCase("driver") || 
+                     role.equalsIgnoreCase("manager")) {
+                     
+                     esql.executeUpdate(String.format("UPDATE Users SET role = '%s' WHERE login = '%s'", role, user));
+                     System.out.println("Role updated.");
+                  } else {
+                     System.out.println("Invalid role.");
+                  }
+                  break;
+                  
+               case 2:
+                  System.out.print("New password: ");
+                  String pass = in.readLine();
+                  
+                  esql.executeUpdate(String.format("UPDATE Users SET password = '%s' WHERE login = '%s'", pass, user));
+                  System.out.println("Password reset.");
+                  break;
+            }
+         } 
+         catch (Exception e) {
+            System.err.println(e.getMessage());
          }
-         if (!currentRole.equalsIgnoreCase("manager") && !currentRole.equalsIgnoreCase("driver")) {
-            System.out.println("Error: You do not have permission to update order status.");
-            return;
-         }
-       }
-
-       public static void updateMenu(PizzaStore esql) {
-         if (currentUser == null) {
-            System.out.println("Error: You must be logged in to update the menu.");
-            return;
-         }
-         if (!currentRole.equalsIgnoreCase("manager")) {
-            System.out.println("Error: You do not have permission to update the menu.");
-            return;
-         }
-       }
-
-       public static void updateUser(PizzaStore esql) {
-         if (currentUser == null) {
-            System.out.println("Error: You must be logged in to update user information.");
-            return;
-         }
-         if (!currentRole.equalsIgnoreCase("manager")) {
-            System.out.println("Error: You do not have permission to update user information.");
-            return;
-         }
-       }
-
-    }//end PizzaStore
-
+      }
+   }
