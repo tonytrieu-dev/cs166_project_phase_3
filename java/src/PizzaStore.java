@@ -847,11 +847,68 @@
        }
 
        public static void viewOrderInfo(PizzaStore esql) {
+         try {
+            if (currentuser == null) {
+               System.out.println("Error: You must be logged in to view order information.");
+               return;
+            }
 
-       }
+            System.out.print("Enter the Order ID to look up: ");
+            int orderID = Integer.parseInt(in.readLine());
+
+            Strint query;
+            if (currentRole.equalsIgnoreCase("manager") || currentRole.equalsIgnoreCase("driver")) {
+               // Managers & Drivers can see all orders
+               query = String.format(
+                  "SELECT orderTimeStamp, totalPrice, orderStatus FROM FoodOrder WHERE orderID = %d",
+                  orderID);
+            }
+            else {
+               // Customer can only see their order
+               query = String.format(
+                  "SELECT orderTimeStamp, totalPrice, orderStatus, FROM FoodOrder WHERE %d AND login = '%s'",
+                  orderID, currentUser);
+            }
+
+            List<List<String>> orderDetails = esql.executeQueryAndReturnResult(query);
+
+            if (orderDetails.isEmpty()) {
+               System.out.println("Error: No order found or you do not have permission to view this order.");
+               return;
+            }
+            // Now display the order info
+            List<String> order = orderDetails.get(0);
+            System.out.println("\n===== Order Details =====");
+            System.out.println("Timestamp: " + order.get(0));
+            System.out.println("Total Price: $" + order.get(1));
+            System.out.println("Status: " + order.get(2));
+
+            // Retrieve order items
+         String itemsQuery = String.format(
+               "SELECT itemName, quantity FROM ItemsInOrder WHERE orderID = %d",
+               orderID);
+         System.out.println("\n===== Order Items =====");
+         int itemCount = esql.executeQueryAndPrintResult(itemsQuery);
+
+         if (itemCount == 0) {
+               System.out.println("No items found for this order.");
+         }
+      } 
+         catch (Exception e) {
+            System.err.println("Error retrieving order information: " + e.getMessage());
+         }
+      }
+   }
 
        public static void viewStores(PizzaStore esql) {
-
+         try {
+            System.out.println("\n===== List of Stores =====");
+            String query = "Select storeID, address, city, state, reviewScore, isOpen FROM Store ORDER BY storeID";
+            esql.executeQueryAndPrintResult(query);
+         }
+         catch (Excepetion e) {
+            System.err.println("Error retrieving store information: " e.getMessage());
+         }
        }
 
        public static void updateOrderStatus(PizzaStore esql) {
