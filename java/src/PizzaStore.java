@@ -848,7 +848,7 @@
 
        public static void viewOrderInfo(PizzaStore esql) {
          try {
-            if (currentuser == null) {
+            if (currentUser == null) {
                System.out.println("Error: You must be logged in to view order information.");
                return;
             }
@@ -856,7 +856,7 @@
             System.out.print("Enter the Order ID to look up: ");
             int orderID = Integer.parseInt(in.readLine());
 
-            Strint query;
+            String query;
             if (currentRole.equalsIgnoreCase("manager") || currentRole.equalsIgnoreCase("driver")) {
                // Managers & Drivers can see all orders
                query = String.format(
@@ -898,7 +898,7 @@
             System.err.println("Error retrieving order information: " + e.getMessage());
          }
       }
-   }
+   
 
        public static void viewStores(PizzaStore esql) {
          try {
@@ -906,8 +906,8 @@
             String query = "Select storeID, address, city, state, reviewScore, isOpen FROM Store ORDER BY storeID";
             esql.executeQueryAndPrintResult(query);
          }
-         catch (Excepetion e) {
-            System.err.println("Error retrieving store information: " e.getMessage());
+         catch (Exception e) {
+            System.err.println("Error retrieving store information: " + e.getMessage());
          }
        }
 
@@ -920,7 +920,6 @@
             System.out.println("Error: You do not have permission to update order status.");
             return;
          }
-
        }
 
        public static void updateMenu(PizzaStore esql) {
