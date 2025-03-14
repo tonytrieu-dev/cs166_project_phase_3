@@ -289,12 +289,12 @@
  
                  //**the following functionalities should only be able to be used by drivers & managers**
                  if (currentRole.equalsIgnoreCase("driver") || currentRole.equalsIgnoreCase("manager")) {
-                    System.out.println("9. Update Order Status");
+                 System.out.println("9. Update Order Status");
                  }
                  //**the following functionalities should only be able to be used by managers**
                  if (currentRole.equalsIgnoreCase("manager")) {
-                    System.out.println("10. Update Menu");
-                    System.out.println("11. Update User");
+                 System.out.println("10. Update Menu");
+                 System.out.println("11. Update User");
                  }
                  System.out.println(".........................");
                  System.out.println("20. Log out");
@@ -853,7 +853,28 @@
        }
 
        public static void viewRecentOrders(PizzaStore esql) {
-         
+         try {
+            if(currentUser == null) {
+               System.out.print("Error: You must be logged in to view recent orders.");
+               return;
+            }
+            System.out.println("\n===== Your 5 Most recent orders =====");
+
+            String query = String.format(
+               "SELECT orderID, storeID, totalPrice, orderTimestamp, orderStatus " +
+               "FROM FoodOrder WHERE login = '%s' ORDER BY orderTimestamp DESC LIMIT 5",
+               currentUser
+            );
+
+            int resultCount = esql.executeQueryAndPrintResult(query);
+
+            if(resultCount == 0) {
+               System.out.println("No recent orders found.");
+            }
+         }
+         catch (Exception e) {
+               System.err.println("Error retrieving recent orders: " + e.getMessage());
+            }
        }
 
        public static void viewOrderInfo(PizzaStore esql) {
