@@ -364,23 +364,22 @@
      * Creates a new user
      **/
     public static void CreateUser(PizzaStore esql) {
-         try {
-         // Display a friendly registration header
+      try {
          System.out.println("\n=== USER REGISTRATION ===");
-         
-         // Collect user information with clear prompts
          System.out.print("Enter your login: ");
          String login = in.readLine().trim();
-         
          System.out.print("Enter your password: ");
          String password = in.readLine().trim();
-         
          System.out.print("Enter your phone number: ");
          String phoneNum = in.readLine().trim();
          
-         // Validate that all required fields are provided
          if (login.isEmpty() || password.isEmpty() || phoneNum.isEmpty()) {
             System.out.println("Error: All fields must be filled out.");
+            return;
+         }
+
+         if (!phoneNum.matches("\\d+")) {
+            System.out.println("Error: Phone number must contain only numeric digits (0-9).");
             return;
          }
          
@@ -393,15 +392,8 @@
             return;
          }
          
-         // Sanitize inputs to prevent SQL injection attacks
-         login = login.replace("'", "''");
-         password = password.replace("'", "''");
-         phoneNum = phoneNum.replace("'", "''");
-         
          // Set default role for new users
          String role = "customer";
-         
-         // Construct and execute the SQL query to add the user to the database
          String query = "INSERT INTO Users (login, password, role, favoriteItems, phoneNum) VALUES ('" 
                      + login + "', '" 
                      + password + "', '" 
@@ -410,7 +402,6 @@
          
          esql.executeUpdate(query);
          
-         // Provide a success message to confirm the user creation
          System.out.println("\nSuccess! User '" + login + "' has been registered as a customer.");
          System.out.println("You can now log in with your credentials.");
          
@@ -430,12 +421,9 @@
       try {
          System.out.println("Login");
          System.out.println("-----");
-         
-         // Get username
+
          System.out.print("Enter username: ");
          String login = in.readLine();
-         
-         // Get password
          System.out.print("Enter password: ");
          String password = in.readLine();
          
@@ -477,7 +465,6 @@
             System.out.println("Error: No user is currently logged in.");
             return;
          }
-         
          String query = String.format("SELECT login, role, favoriteItems, phoneNum FROM Users WHERE login = '%s'", currentUser);
          List<List<String>> result = esql.executeQueryAndReturnResult(query);
          
