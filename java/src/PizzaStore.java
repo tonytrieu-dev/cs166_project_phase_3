@@ -417,7 +417,6 @@
          System.out.print("Enter password: ");
          String password = in.readLine();
          
-         // Check if user exists and password matches
          String query = String.format("SELECT * FROM Users WHERE login = '%s' AND password = '%s'", login, password);
          int userCount = esql.executeQuery(query);
          if (userCount == 1) {
@@ -483,8 +482,6 @@
                case 1: // Password
                   System.out.print("Current password: ");
                   String currentPassword = in.readLine();
-                     
-                  // Verify password
                   String verifyQuery = String.format("SELECT login FROM Users WHERE login = '%s' AND password = '%s'", currentUser, currentPassword);
                   List<List<String>> result = esql.executeQueryAndReturnResult(verifyQuery);
                      
@@ -495,13 +492,11 @@
                      
                   System.out.print("New password (it has to be three characters or longer): ");
                   String newPassword = in.readLine();
-                     
                   if (newPassword.length() < 3) {
                      System.out.println("Error: Password too short.");
                      return;
                   }
                      
-                  // Update password
                   String updateQuery = String.format("UPDATE Users SET password = '%s' WHERE login = '%s'", newPassword, currentUser);
                   esql.executeUpdate(updateQuery);
                   System.out.println("Password updated successfully.");
@@ -510,7 +505,6 @@
                   case 2: // Favorite items
                      System.out.print("Enter your favorite item: ");
                      String favoriteItem = in.readLine();
-
                      // Check if the item exists
                      String checkItemQuery = String.format("SELECT itemName FROM Items WHERE itemName = '%s'", favoriteItem);
                      result = esql.executeQueryAndReturnResult(checkItemQuery);
@@ -519,7 +513,6 @@
                         return;
                      }
 
-                     // Update favorite item
                      updateQuery = String.format("UPDATE Users SET favoriteItems = '%s' WHERE login = '%s'", 
                         favoriteItem, currentUser);
                      esql.executeUpdate(updateQuery);
@@ -570,6 +563,7 @@
                   System.out.println("\n===== FULL MENU =====");
                   esql.executeQueryAndPrintResult(query);
                   break;
+
                case 2: // Filter by item type
                   System.out.println("Available item types:");
                   // Get all distinct item types - show them exactly as stored
@@ -658,17 +652,13 @@
             // Verify store exists
             String storeCheckQuery = String.format("SELECT storeID, isOpen FROM Store WHERE storeID = %d", storeID);
             List<List<String>> storeResult = esql.executeQueryAndReturnResult(storeCheckQuery);
-            
             if (storeResult.isEmpty()) {
                System.out.println("Error: Invalid store selection.");
                return;
             }
             
-            // Get isOpen as a string and check its value
             String isOpenStatus = storeResult.get(0).get(1);
             System.out.println("Store open status: " + isOpenStatus);
-            
-            // Warn users if store is not open (assuming "true"/"false" or "yes"/"no" strings)
             if (isOpenStatus.equalsIgnoreCase("false") || isOpenStatus.equalsIgnoreCase("no") || isOpenStatus.equalsIgnoreCase("closed") || isOpenStatus.equals("0")) {
                System.out.println("WARNING: This store appears to be closed. Do you still want to place an order? Type yes or no.");
                String userChoice = in.readLine();
@@ -689,8 +679,6 @@
             float totalPrice = 0.0f;
             ArrayList<String> orderedItems = new ArrayList<>();
             ArrayList<Integer> itemQuantities = new ArrayList<>();
-            
-            // Add items to order
             boolean addingItems = true;
             while (addingItems) {
                // Display menu
@@ -706,7 +694,6 @@
                   continue;
                }
                
-               // Verify item exists
                String itemCheckQuery = String.format("SELECT price FROM Items WHERE itemName = '%s'", itemName);
                List<List<String>> itemCheck = esql.executeQueryAndReturnResult(itemCheckQuery);
                
@@ -723,16 +710,14 @@
                   continue;
                }
                
-               // Add to order
                orderedItems.add(itemName);
                itemQuantities.add(quantity);
                
-               // Update total price
                float itemPrice = Float.parseFloat(itemCheck.get(0).get(0));
                totalPrice += (itemPrice * quantity);
                
                System.out.println("Item added. Current total: $" + String.format("%.2f", totalPrice));
-               System.out.print("Add another item? (y/n): ");
+               System.out.print("Add another item? Type yes or no: ");
                String another = in.readLine();
                if (!another.equalsIgnoreCase("y")) {
                   addingItems = false;
@@ -748,8 +733,6 @@
             Timestamp timestamp = new Timestamp(date.getTime());
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String formattedTimestamp = sdf.format(timestamp);
-            
-            // Create order in database
             String orderQuery = String.format(
                "INSERT INTO FoodOrder (orderID, login, storeID, totalPrice, orderTimestamp, orderStatus) " +
                "VALUES (%d, '%s', %d, %.2f, '%s', 'Placed')",
@@ -1033,8 +1016,8 @@ public static void viewOrderInfo(PizzaStore esql) {
                   System.out.print("Item to delete: ");
                   String delItem = in.readLine();
                   
-                  System.out.print("Confirm delete (y/n): ");
-                  if (in.readLine().equalsIgnoreCase("y")) {
+                  System.out.print("Confirm delete Type yes or no: ");
+                  if (in.readLine().equalsIgnoreCase("yes")) {
                      esql.executeUpdate(String.format("DELETE FROM Items WHERE itemName = '%s'", delItem));
                      System.out.println("Item deleted.");
                   }
