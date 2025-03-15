@@ -373,19 +373,19 @@
             System.out.println("Error: All fields must be filled out.");
             return;
          }
+
          if (!phoneNum.matches("\\d+")) {
             System.out.println("Error: Phone number must contain only numeric digits (0-9).");
             return;
          }
-         // Check if the username already exists in the database
+
          String checkQuery = "SELECT login FROM Users WHERE login = '" + login.replace("'", "''") + "'";
          List<List<String>> result = esql.executeQueryAndReturnResult(checkQuery);
          if (!result.isEmpty()) {
             System.out.println("Error: This username already exists. Please choose another one.");
             return;
          }
-         
-         // Set default role for new users
+         // Sets the default role for new users
          String role = "customer";
          String query = "INSERT INTO Users (login, password, role, favoriteItems, phoneNum) VALUES ('" 
                      + login + "', '" 
@@ -408,62 +408,64 @@
      * Check log in credentials for an existing user
      * @return User login or null is the user does not exist
      **/
-    public static String LogIn(PizzaStore esql){
-      try {
-         System.out.println("Login");
-         System.out.println("-----");
-         System.out.print("Enter username: ");
-         String login = in.readLine();
-         System.out.print("Enter password: ");
-         String password = in.readLine();
-         
-         String query = String.format("SELECT * FROM Users WHERE login = '%s' AND password = '%s'", login, password);
-         int userCount = esql.executeQuery(query);
-         if (userCount == 1) {
-            // Get the user's role for permission checks later
-            String roleQuery = String.format("SELECT role FROM Users WHERE login = '%s'", login);
-            List<List<String>> result = esql.executeQueryAndReturnResult(roleQuery);
-            currentRole = result.get(0).get(0);
-            currentUser = login;
-            System.out.println("Login successful!");
-            System.out.println("Welcome, " + login + "! (Role: " + currentRole + ")");
-            return login;
-         } else {
-            System.out.println("Error: Invalid username or password.");
+      public static String LogIn(PizzaStore esql) {
+         try {
+            System.out.println("Login");
+            System.out.println("-----");
+            System.out.print("Enter username: ");
+            String login = in.readLine();
+            System.out.print("Enter password: ");
+            String password = in.readLine();
+
+            String query = String.format("SELECT * FROM Users WHERE login = '%s' AND password = '%s'", login, password);
+            int userCount = esql.executeQuery(query);
+            if (userCount == 1) {
+               // Get the user's role for permission checks later
+               String roleQuery = String.format("SELECT role FROM Users WHERE login = '%s'", login);
+               List<List<String>> result = esql.executeQueryAndReturnResult(roleQuery);
+               currentRole = result.get(0).get(0);
+               currentUser = login;
+               System.out.println("Login successful!");
+               System.out.println("Welcome, " + login + "! (Role: " + currentRole + ")");
+               return login;
+            } else {
+               System.out.println("Error: Invalid username or password.");
+               return null;
+            }
+         } catch (Exception e) {
+            System.err.println(e.getMessage());
             return null;
          }
-      } catch (Exception e) {
-         System.err.println(e.getMessage());
-         return null;
-      }
-    }//end
+      }//end
  
     /*
      * View user profile information
      **/
-    public static void viewProfile(PizzaStore esql) {
-      try {
-         System.out.println("User Profile");
-         System.out.println("-----------");
-         if (currentUser == null) {
-            System.out.println("Error: No user is currently logged in.");
-            return;
+      public static void viewProfile(PizzaStore esql) {
+         try {
+            System.out.println("User Profile");
+            System.out.println("-----------");
+
+            if (currentUser == null) {
+               System.out.println("Error: No user is currently logged in.");
+               return;
+            }
+               
+            String query = String.format("SELECT login, role, favoriteItems, phoneNum FROM Users WHERE login = '%s'", currentUser);
+            List<List<String>> result = esql.executeQueryAndReturnResult(query);
+            if (result.size() > 0) {
+               List<String> user = result.get(0);
+               System.out.println("Username: " + user.get(0));
+               System.out.println("Role: " + user.get(1));
+               System.out.println("Favorite Items: " + (user.get(2) == null || user.get(2).isEmpty() ? "None" : user.get(2)));
+               System.out.println("Phone Number: " + user.get(3));
+               } else {
+                  System.out.println("Error: Could not retrieve user profile information.");
+               }
+         } catch (Exception e) {
+            System.err.println("Error viewing profile: " + e.getMessage());
          }
-         String query = String.format("SELECT login, role, favoriteItems, phoneNum FROM Users WHERE login = '%s'", currentUser);
-         List<List<String>> result = esql.executeQueryAndReturnResult(query);
-         if (result.size() > 0) {
-            List<String> user = result.get(0);
-            System.out.println("Username: " + user.get(0));
-            System.out.println("Role: " + user.get(1));
-            System.out.println("Favorite Items: " + (user.get(2) == null || user.get(2).isEmpty() ? "None" : user.get(2)));
-            System.out.println("Phone Number: " + user.get(3));
-         } else {
-            System.out.println("Error: Could not retrieve user profile information.");
-         }
-      } catch (Exception e) {
-         System.err.println("Error viewing profile: " + e.getMessage());
       }
-   }
       
       /*
       * Update user profile information
@@ -474,7 +476,6 @@
                System.out.println("Error: You must be logged in to update your profile.");
                return;
             }
-
             System.out.println("\nUpdate Profile");
             System.out.println("1. Password  2. Favorite Items  3. Phone Number  4. Go back");
                
@@ -536,96 +537,92 @@
                   case 4: // Go back
                      return;
                   default:
-                     System.out.println("Invalid choice.");
+                     System.out.println("Not a valid choice.");
                }
-            } catch (Exception e) {
-               System.err.println("Error: " + e.getMessage());
-            }
-   }
+         } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+         }
+      }
     
     /*
      * View the restaurant menu with filtering and sorting options
      **/
-    public static void viewMenu(PizzaStore esql) {
-      try {
-            System.out.println("Menu Viewing Options");
-            System.out.println("-------------------");
-            System.out.println("1. View full menu");
-            System.out.println("2. Filter by item type");
-            System.out.println("3. Filter by price range");
-            System.out.println("4. Sort by price (low to high)");
-            System.out.println("5. Sort by price (high to low)");
-            System.out.println("6. Go back");
-            
-            switch (readChoice()) {
-               case 1: 
-                  String query = "SELECT itemName, typeOfItem, price, description FROM Items ORDER BY typeOfItem, itemName";
-                  System.out.println("\n===== FULL MENU =====");
-                  esql.executeQueryAndPrintResult(query);
-                  break;
+      public static void viewMenu(PizzaStore esql) {
+         try {
+               System.out.println("Menu Viewing Options");
+               System.out.println("-------------------");
+               System.out.println("1. View full menu");
+               System.out.println("2. Filter by item type");
+               System.out.println("3. Filter by price range");
+               System.out.println("4. Sort by price (low to high)");
+               System.out.println("5. Sort by price (high to low)");
+               System.out.println("6. Go back!");
+               
+               switch (readChoice()) {
+                  case 1: 
+                     String query = "SELECT itemName, typeOfItem, price, description FROM Items ORDER BY typeOfItem, itemName";
+                     System.out.println("\n===== FULL MENU =====");
+                     esql.executeQueryAndPrintResult(query);
+                     break;
 
-               case 2: // Filter by item type
-                  System.out.println("Available item types:");
-                  // Get all distinct item types - show them exactly as stored
-                  String typesQuery = "SELECT DISTINCT typeOfItem FROM Items ORDER BY typeOfItem";
-                  esql.executeQueryAndPrintResult(typesQuery);
-                  System.out.print("Enter type to filter by: ");
-                  String type = in.readLine();
-                  String filteredQuery = String.format(
-                     "SELECT itemName, typeOfItem, price, description FROM Items " +
-                     "WHERE TRIM(LOWER(typeOfItem)) LIKE LOWER('%%%s%%') " +
-                     "ORDER BY itemName", 
-                     type);
+                  case 2: // Filter by item type
+                     System.out.println("Available item types:");
+                     // Get all distinct item types - show them exactly as stored
+                     String typesQuery = "SELECT DISTINCT typeOfItem FROM Items ORDER BY typeOfItem";
+                     esql.executeQueryAndPrintResult(typesQuery);
+                     System.out.print("Enter type to filter by: ");
+                     String type = in.readLine();
+                     String filteredQuery = String.format(
+                        "SELECT itemName, typeOfItem, price, description FROM Items " +
+                        "WHERE TRIM(LOWER(typeOfItem)) LIKE LOWER('%%%s%%') " +
+                        "ORDER BY itemName", 
+                        type);
+                        
+                     System.out.println("\n===== FILTERED MENU BY TYPE =====");
+                     int count = esql.executeQueryAndPrintResult(filteredQuery);
+                     if (count == 0) {
+                        System.out.println("No items found with the specified type.");
+                        // Additional debugging to show what types exist
+                        //System.out.println("\nDebug - All existing types:");
+                        //esql.executeQueryAndPrintResult("SELECT DISTINCT typeOfItem FROM Items");
+                     }
+                     break;
                      
-                  System.out.println("\n===== FILTERED MENU BY TYPE =====");
-                  int count = esql.executeQueryAndPrintResult(filteredQuery);
-                  if (count == 0) {
-                     System.out.println("No items found with the specified type.");
+                  case 3: // Filter by price range
+                     System.out.print("Enter minimum price: ");
+                     float minPrice = Float.parseFloat(in.readLine());
+                     System.out.print("Enter maximum price: ");
+                     float maxPrice = Float.parseFloat(in.readLine());
+                     String priceQuery = String.format("SELECT itemName, typeOfItem, price, description FROM Items WHERE price >= %.2f AND price <= %.2f ORDER BY price", minPrice, maxPrice);
+                     System.out.println("\n===== FILTERED MENU BY PRICE RANGE =====");
+                     count = esql.executeQueryAndPrintResult(priceQuery);
+                     if (count == 0) {
+                        System.out.println("No items found in the specified price range.");
+                     }
+                     break;
                      
-                     // Additional debugging to show what types exist
-                     System.out.println("\nDebug - All existing types:");
-                     esql.executeQueryAndPrintResult("SELECT DISTINCT typeOfItem FROM Items");
-                  }
-                  break;
-                  
-               case 3: // Filter by price range
-                  System.out.print("Enter minimum price: ");
-                  float minPrice = Float.parseFloat(in.readLine());
-                  
-                  System.out.print("Enter maximum price: ");
-                  float maxPrice = Float.parseFloat(in.readLine());
-                  
-                  String priceQuery = String.format("SELECT itemName, typeOfItem, price, description FROM Items WHERE price >= %.2f AND price <= %.2f ORDER BY price", minPrice, maxPrice);
-                  System.out.println("\n===== FILTERED MENU BY PRICE RANGE =====");
-                  count = esql.executeQueryAndPrintResult(priceQuery);
-                  
-                  if (count == 0) {
-                     System.out.println("No items found in the specified price range.");
-                  }
-                  break;
-                  
-               case 4: // Sort by price (low to high)
-                  String ascendingQuery = "SELECT itemName, typeOfItem, price, description FROM Items ORDER BY price ASC, itemName";
-                  System.out.println("\n===== MENU SORTED BY PRICE (LOW TO HIGH) =====");
-                  esql.executeQueryAndPrintResult(ascendingQuery);
-                  break;
-                  
-               case 5: // Sort by price (high to low)
-                  String descendingQuery = "SELECT itemName, typeOfItem, price, description FROM Items ORDER BY price DESC, itemName";
-                  System.out.println("\n===== MENU SORTED BY PRICE (HIGH TO LOW) =====");
-                  esql.executeQueryAndPrintResult(descendingQuery);
-                  break;
-                  
-               case 6: // Go back
-                  return;
-                  
-               default:
-                  System.out.println("Unrecognized choice!");
-                  break;
+                  case 4: // Sort by price (low to high)
+                     String ascendingQuery = "SELECT itemName, typeOfItem, price, description FROM Items ORDER BY price ASC, itemName";
+                     System.out.println("\n===== MENU SORTED BY PRICE (LOW TO HIGH) =====");
+                     esql.executeQueryAndPrintResult(ascendingQuery);
+                     break;
+                     
+                  case 5: // Sort by price (high to low)
+                     String descendingQuery = "SELECT itemName, typeOfItem, price, description FROM Items ORDER BY price DESC, itemName";
+                     System.out.println("\n===== MENU SORTED BY PRICE (HIGH TO LOW) =====");
+                     esql.executeQueryAndPrintResult(descendingQuery);
+                     break;
+                     
+                  case 6: // Go back
+                     return;
+                     
+                  default:
+                     System.out.println("Not a valid choice!");
+                     break;
+               }
+            } catch (Exception e) {
+               System.err.println(e.getMessage());
             }
-         } catch (Exception e) {
-            System.err.println(e.getMessage());
-         }
       }
       
       /*
@@ -640,16 +637,13 @@
 
             System.out.println("Place New Order");
             System.out.println("--------------");
-
-            // Show all stores - make sure to treat isOpen as a string
             System.out.println("Available stores:");
             String storeQuery = "SELECT storeID, address, city, state, isOpen FROM Store";
             esql.executeQueryAndPrintResult(storeQuery);
-            // Select store
             System.out.print("Enter the store ID you want to order from: ");
             int storeID = Integer.parseInt(in.readLine());
             
-            // Verify store exists
+            // Verify if the store exists
             String storeCheckQuery = String.format("SELECT storeID, isOpen FROM Store WHERE storeID = %d", storeID);
             List<List<String>> storeResult = esql.executeQueryAndReturnResult(storeCheckQuery);
             if (storeResult.isEmpty()) {
@@ -686,9 +680,8 @@
                String menuQuery = "SELECT itemName, price FROM Items ORDER BY itemName";
                esql.executeQueryAndPrintResult(menuQuery);
                
-               System.out.print("Enter item name (or 'done' to finish): ");
+               System.out.print("Enter item name (or type 'done' to finish): ");
                String itemName = in.readLine();
-               
                if (itemName.equalsIgnoreCase("done")) {
                   addingItems = false;
                   continue;
@@ -696,7 +689,6 @@
                
                String itemCheckQuery = String.format("SELECT price FROM Items WHERE itemName = '%s'", itemName);
                List<List<String>> itemCheck = esql.executeQueryAndReturnResult(itemCheckQuery);
-               
                if (itemCheck.isEmpty()) {
                   System.out.println("Error: Item not found on menu.");
                   continue;
@@ -704,7 +696,6 @@
                
                System.out.print("Enter quantity: ");
                int quantity = Integer.parseInt(in.readLine());
-               
                if (quantity <= 0) {
                   System.out.println("Error: Quantity must be greater than zero.");
                   continue;
@@ -712,14 +703,12 @@
                
                orderedItems.add(itemName);
                itemQuantities.add(quantity);
-               
                float itemPrice = Float.parseFloat(itemCheck.get(0).get(0));
                totalPrice += (itemPrice * quantity);
-               
                System.out.println("Item added. Current total: $" + String.format("%.2f", totalPrice));
                System.out.print("Add another item? Type yes or no: ");
-               String another = in.readLine();
-               if (!another.equalsIgnoreCase("y")) {
+               String anotherUserItem = in.readLine();
+               if (!anotherUserItem.equalsIgnoreCase("yes")) {
                   addingItems = false;
                }
             }
@@ -737,7 +726,6 @@
                "INSERT INTO FoodOrder (orderID, login, storeID, totalPrice, orderTimestamp, orderStatus) " +
                "VALUES (%d, '%s', %d, %.2f, '%s', 'Placed')",
                orderID, currentUser, storeID, totalPrice, formattedTimestamp);
-            
             esql.executeUpdate(orderQuery);
             
             // Add items to order
@@ -767,15 +755,13 @@
             System.out.println("Order History");
             System.out.println("------------");
             String query;
-               
-            // Check user role for permissions
-            if (currentRole.equalsIgnoreCase("Manager") || currentRole.equalsIgnoreCase("Driver")) {
-               // Managers and drivers can see every order
+
+            if (currentRole.trim().equalsIgnoreCase("Manager") || currentRole.trim().equalsIgnoreCase("Driver")) {
                System.out.println("1. View all orders in the system");
                System.out.println("2. View only my orders");
                System.out.print("Enter choice: ");
+
                int choice = Integer.parseInt(in.readLine());
-                  
                if (choice == 1) {
                   query = "SELECT orderID, login, storeID, totalPrice, orderTimestamp, orderStatus FROM FoodOrder ORDER BY orderTimestamp DESC";
                   System.out.println("\n===== ALL ORDERS IN SYSTEM =====");
@@ -784,7 +770,7 @@
                   System.out.println("\n===== YOUR ORDERS =====");
                }
                } else {
-                  // Regular customers can only see their own orders
+                  // Customers can only see their own orders
                   query = String.format("SELECT orderID, storeID, totalPrice, orderTimestamp, orderStatus FROM FoodOrder WHERE login = '%s' ORDER BY orderTimestamp DESC", currentUser);
                   System.out.println("\n===== YOUR ORDERS =====");
                }
@@ -799,16 +785,15 @@
             catch (Exception e) {
                System.err.println(e.getMessage());
             }
-       }
+      }
 
        public static void viewRecentOrders(PizzaStore esql) {
          try {
-            if(currentUser == null) {
+            if (currentUser == null) {
                System.out.print("Error: You must be logged in to view recent orders.");
                return;
             }
             System.out.println("\n===== Your 5 Most recent orders =====");
-
             String query = String.format(
                "SELECT orderID, storeID, totalPrice, orderTimestamp, orderStatus " +
                "FROM FoodOrder WHERE login = '%s' ORDER BY orderTimestamp DESC LIMIT 5",
@@ -816,14 +801,13 @@
             );
 
             int resultCount = esql.executeQueryAndPrintResult(query);
-
-            if(resultCount == 0) {
+            if (resultCount == 0) {
                System.out.println("No recent orders found.");
             }
          }
          catch (Exception e) {
                System.err.println("Error retrieving recent orders: " + e.getMessage());
-            }
+         }
        }
 
 public static void viewOrderInfo(PizzaStore esql) {
