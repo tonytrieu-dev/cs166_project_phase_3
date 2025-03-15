@@ -1,3 +1,4 @@
+-- Ricardo's triggers
 CREATE OR REPLACE FUNCTION validate_phone_number()
 RETURNS "trigger" AS
 $BODY$
@@ -45,6 +46,8 @@ FOR EACH ROW
 EXECUTE PROCEDURE validate_item_quantity();
 
 
+
+-- Tony's triggers
 CREATE OR REPLACE FUNCTION log_status_change()
 RETURNS "trigger" AS
 $BODY$
