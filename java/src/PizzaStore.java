@@ -605,15 +605,15 @@
                   break;
                   
                case 4: // Sort by price (low to high)
-                  String ascQuery = "SELECT itemName, typeOfItem, price, description FROM Items ORDER BY price ASC, itemName";
+                  String ascendingQuery = "SELECT itemName, typeOfItem, price, description FROM Items ORDER BY price ASC, itemName";
                   System.out.println("\n===== MENU SORTED BY PRICE (LOW TO HIGH) =====");
-                  esql.executeQueryAndPrintResult(ascQuery);
+                  esql.executeQueryAndPrintResult(ascendingQuery);
                   break;
                   
                case 5: // Sort by price (high to low)
-                  String descQuery = "SELECT itemName, typeOfItem, price, description FROM Items ORDER BY price DESC, itemName";
+                  String descendingQuery = "SELECT itemName, typeOfItem, price, description FROM Items ORDER BY price DESC, itemName";
                   System.out.println("\n===== MENU SORTED BY PRICE (HIGH TO LOW) =====");
-                  esql.executeQueryAndPrintResult(descQuery);
+                  esql.executeQueryAndPrintResult(descendingQuery);
                   break;
                   
                case 6: // Go back
